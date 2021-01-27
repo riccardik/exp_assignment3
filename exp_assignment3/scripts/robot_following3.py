@@ -115,7 +115,7 @@ class image_feature:
         blackLower = (0, 0, 0)
         blackUpper = (5,50,50)
 
-        redLower = (0, 200, 200) 
+        redLower = (0, 50, 50) 
         redUpper = (5, 255, 255)
 
         yellowLower = (25, 50, 50) 
@@ -190,7 +190,7 @@ class image_feature:
             #print ('mirostate: [%d]' % mirostate)
             # only proceed if the radius meets a minimum size
             print ('radius0 ', radius)
-            if radius > 40 and mirostate == 2:
+            if radius > 35 and mirostate == 2:
                 # draw the circle and centroid on the frame,
                 # then update the list of tracked points
                 cv2.circle(image_np, (int(x), int(y)), int(radius),
