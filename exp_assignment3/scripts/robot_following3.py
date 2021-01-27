@@ -189,7 +189,8 @@ class image_feature:
             #print ('radius', radius, 'mirostate', mirostate)
             #print ('mirostate: [%d]' % mirostate)
             # only proceed if the radius meets a minimum size
-            if radius > 50 and mirostate == 2:
+            print ('radius0 ', radius)
+            if radius > 40 and mirostate == 2:
                 # draw the circle and centroid on the frame,
                 # then update the list of tracked points
                 cv2.circle(image_np, (int(x), int(y)), int(radius),
@@ -218,7 +219,7 @@ class image_feature:
                     
                     self.explore_abilitation_pub.publish(explore_abilitation)
  
-                print ('radius0 ', radius)
+                
                 if radius > 80:
                     print ('color', ballcolor)
                     vel.angular.z = 0
