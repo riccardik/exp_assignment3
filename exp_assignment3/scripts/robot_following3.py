@@ -42,6 +42,19 @@ yc = 0
 mirostate = 2
 reached = 0
 
+global found_green
+global found_black
+global found_red
+global found_magenta
+global found_yellow
+global found_blue
+found_green = 0
+found_black = 0
+found_red = 0
+found_magenta = 0
+found_yellow = 0
+found_blue = 0
+
 class image_feature:
 
     def __init__(self):
@@ -164,13 +177,45 @@ class image_feature:
         #print(arr)
         #print("lun",  len(cntsr))
         #print (sortedArr)
+        global found_green
+        global found_black
+        global found_red
+        global found_magenta
+        global found_yellow
+        global found_blue
 
         cnts = sortedArr[5][0]
         ballcolor = sortedArr[5][2]
         #if len(cnts)>0:
             #print (cnts, ballcolor, 'detected')
 
-
+        if ballcolor == "green": 
+            if found_green == 1:
+                cnts =""
+                print (ballcolor, "already found")
+        elif ballcolor == "black":
+            if found_black == 1:
+                cnts = ""
+                print (ballcolor, "already found")
+        elif  ballcolor == "blue":
+            if found_blue == 1:
+                cnts = ""
+                print (ballcolor, "already found")
+        elif   ballcolor == "red":
+            if found_red == 1:
+                cnts = ""
+                print (ballcolor, "already found")
+        elif  ballcolor == "magenta":
+            if found_magenta == 1:
+                cnts = ""
+                print (ballcolor, "already found")
+        elif  ballcolor == "yellow":
+            if found_yellow== 1:
+                cnts = ""
+                print (ballcolor, "already found")
+        
+            
+            
         center = None
 
         
@@ -190,7 +235,7 @@ class image_feature:
             #print ('mirostate: [%d]' % mirostate)
             # only proceed if the radius meets a minimum size
             print ('radius0 ', radius)
-            if radius > 35 and mirostate == 2:
+            if radius > 32 and mirostate == 2:
                 # draw the circle and centroid on the frame,
                 # then update the list of tracked points
                 cv2.circle(image_np, (int(x), int(y)), int(radius),
@@ -220,7 +265,7 @@ class image_feature:
                     self.explore_abilitation_pub.publish(explore_abilitation)
  
                 
-                if radius > 80:
+                if radius > 70:
                     print ('color', ballcolor)
                     vel.angular.z = 0
                     vel.linear.x = 0
@@ -231,6 +276,25 @@ class image_feature:
                     explore_abilitation = Int32()
                     explore_abilitation.data = 1
                     self.explore_abilitation_pub.publish(explore_abilitation)
+                    if ballcolor == "green": 
+                        found_green = 1
+                        print (ballcolor, "found")
+                    elif ballcolor == "black":
+                        found_black = 1
+                        print (ballcolor, "found")
+                    elif  ballcolor == "blue":
+                        found_blue = 1
+                        print (ballcolor, "found")
+                    elif   ballcolor == "red":
+                        found_red = 1
+                        print (ballcolor, "found")
+                    elif  ballcolor == "magenta":
+                        found_magenta = 1
+                        print (ballcolor, "found")
+                    elif  ballcolor == "yellow":
+                        found_yellow = 1
+                        print (ballcolor, "found")
+        
                 #rospy.loginfo('%d'%reached)
                 """ if  vel.angular.z < 0.05 and vel.angular.z > -0.05 and vel.linear.x < 0.05 and vel.linear.x > -0.05 and reached == 0:
                     rospy.loginfo('Moving head')

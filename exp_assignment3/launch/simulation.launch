@@ -7,7 +7,7 @@
   <arg name="extra_gazebo_args" default=""/>
   <arg name="gui" default="true"/>
   <arg name="recording" default="false"/>
-  <arg name="world" default="house2" />
+  <arg name="world" default="house3" />
   <arg name="headless" default="false"/>
   <arg name="debug" default="false"/>
   <arg name="physics" default="ode"/>
@@ -51,7 +51,7 @@
 	 command="$(find xacro)/xacro --inorder $(find exp_assignment3)/urdf/robot2.xacro" />
     
   	<node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-	args="-urdf -model $(arg ns1) -param robot_description -x -5 -y 7 -Y 2.5 -z 0.05"/>
+	args="-urdf -model $(arg ns1) -param robot_description -x -5 -y 7 -Y -0.78 -z 0.05"/>
     <!-- Start Rviz -->  
   <param name="use_gui" value="False"/>
    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" ></node>
