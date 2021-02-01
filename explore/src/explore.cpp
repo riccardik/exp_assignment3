@@ -250,10 +250,10 @@ void Explore::makePlan()
 
 bool Explore::goalOnBlacklist(const geometry_msgs::Point& goal)
 {
-  constexpr static size_t tolerace = 5;
+  constexpr static size_t tolerace = 50;
   costmap_2d::Costmap2D* costmap2d = costmap_client_.getCostmap();
 
-  // check if a goal is on the blacklist for goals that we're pursuing
+ /*  // check if a goal is on the blacklist for goals that we're pursuing
   for (auto& frontier_goal : frontier_blacklist_) {
     double x_diff = fabs(goal.x - frontier_goal.x);
     double y_diff = fabs(goal.y - frontier_goal.y);
@@ -261,8 +261,8 @@ bool Explore::goalOnBlacklist(const geometry_msgs::Point& goal)
     if (x_diff < tolerace * costmap2d->getResolution() &&
         y_diff < tolerace * costmap2d->getResolution())
       return true;
-  }
-  return false;
+  }*/
+  return false; 
 }
 
 void Explore::reachedGoal(const actionlib::SimpleClientGoalState& status,
@@ -271,7 +271,7 @@ void Explore::reachedGoal(const actionlib::SimpleClientGoalState& status,
 {
   ROS_DEBUG("Reached goal with status: %s", status.toString().c_str());
   if (status == actionlib::SimpleClientGoalState::ABORTED) {
-    frontier_blacklist_.push_back(frontier_goal);
+    /* frontier_blacklist_.push_back(frontier_goal); */
     ROS_DEBUG("Adding current goal to black list");
   }
 

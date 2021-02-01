@@ -22,7 +22,7 @@ from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped
 
 import std_msgs
-from  std_msgs.msg import Float64
+from  std_msgs.msg import Float64, String 
 from  std_msgs.msg import Int32
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
@@ -65,6 +65,8 @@ class image_feature:
                                          CompressedImage, queue_size=1)
         self.vel_pub = rospy.Publisher("cmd_vel",
                                        Twist, queue_size=1)
+        self.ballcolor_pub = rospy.Publisher("ball_color",
+                                       String , queue_size=1)
         self.ang_pub = rospy.Publisher("joint1_position_controller/command",
                                            Float64,  queue_size=3)
         self.detection_pub = rospy.Publisher("object_detection",
@@ -270,7 +272,7 @@ class image_feature:
                     vel.angular.z = 0
                     vel.linear.x = 0
                     self.vel_pub.publish(vel)
-                    
+                    time.sleep(1)
                     print ('position: "%f, %f"' % (xc, yc))
                     reached = 1
                     explore_abilitation = Int32()
@@ -294,6 +296,9 @@ class image_feature:
                     elif  ballcolor == "yellow":
                         found_yellow = 1
                         print (ballcolor, "found")
+                    ballc_m = String()
+                    ballc_m.data = ballcolor
+                    self.ballcolor_pub.publish(ballc_m)
         
                 #rospy.loginfo('%d'%reached)
                 """ if  vel.angular.z < 0.05 and vel.angular.z > -0.05 and vel.linear.x < 0.05 and vel.linear.x > -0.05 and reached == 0:
