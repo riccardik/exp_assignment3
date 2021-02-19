@@ -3,6 +3,8 @@
 # Python libs
 import sys
 import time
+from time import sleep
+
 
 # numpy and scipy
 import numpy as np
@@ -230,14 +232,22 @@ class image_feature:
             ((x, y), radius) = cv2.minEnclosingCircle(c)
             M = cv2.moments(c)
             center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-            detected = Int32()
-            detected.data = 1
-            self.detection_pub.publish(detected)
+            """ detected = Int32()
+            detected.data = 1 """
+            """ self.detection_pub.publish(detected) """
             #print ('radius', radius, 'mirostate', mirostate)
             #print ('mirostate: [%d]' % mirostate)
             # only proceed if the radius meets a minimum size
             print ('radius0 ', radius)
-            if radius > 32 and mirostate == 2:
+            if radius >32:
+                detected = Int32()
+                detected.data = 1
+                self.detection_pub.publish(detected)
+                sleep(0.05)
+
+
+            if radius > 32 and mirostate == 3:
+                
                 # draw the circle and centroid on the frame,
                 # then update the list of tracked points
                 cv2.circle(image_np, (int(x), int(y)), int(radius),
@@ -299,6 +309,11 @@ class image_feature:
                     ballc_m = String()
                     ballc_m.data = ballcolor
                     self.ballcolor_pub.publish(ballc_m)
+                    sleep(0.05)
+                    detected = Int32()
+                    detected.data = 1
+                    self.detection_pub.publish(detected)
+                    
         
                 #rospy.loginfo('%d'%reached)
                 """ if  vel.angular.z < 0.05 and vel.angular.z > -0.05 and vel.linear.x < 0.05 and vel.linear.x > -0.05 and reached == 0:

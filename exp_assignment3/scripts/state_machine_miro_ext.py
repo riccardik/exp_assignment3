@@ -222,27 +222,38 @@ class Normal(smach.State):
         self.canc_goalpub = rospy.Publisher('/move_base/cancel', GoalID , queue_size=1)
 
         self.rate = rospy.Rate(200)  # Loop at 200 Hz
+        global still_exploring 
+        still_exploring = 1
     
     def execute(self, userdata):
+        plan = PoseStamped()
+        """ plan.pose.position.x = random_coord()
+        plan.pose.position.y = random_coord() """
+        plan.pose.position.x = random_coord()
+        plan.pose.position.y = random_coord()
+        plan.pose.orientation.w = 1
+        plan.header.frame_id='map'
+        #rospy.loginfo('going to point')
+        self.pubgoal.publish(plan)
         while not rospy.is_shutdown():  
             userdata.current_state = 'NORMAL'
             rospy.Subscriber("object_detection", Int32, detectedCallback)
             #check to see if previous planning action has suceeded
-            detected = 0
-            
-            if detected == 0 and (status==0 or status ==3):
-                print ("ciao")
-               
-                plan = PoseStamped()
-                """ plan.pose.position.x = random_coord()
-                plan.pose.position.y = random_coord() """
-                plan.pose.position.x = random_coord()
-                plan.pose.position.y = random_coord()
-                plan.pose.orientation.w = 1
-                plan.header.frame_id='map'
-                #rospy.loginfo('going to point')
-                self.pubgoal.publish(plan)
-                time.sleep(2)
+            print(detected, status)
+            if still_exploring == 0:
+                if detected == 0 and (status==0 or status ==3):
+                    print ("ciao")
+                
+                    plan = PoseStamped()
+                    """ plan.pose.position.x = random_coord()
+                    plan.pose.position.y = random_coord() """
+                    plan.pose.position.x = random_coord()
+                    plan.pose.position.y = random_coord()
+                    plan.pose.orientation.w = 1
+                    plan.header.frame_id='map'
+                    #rospy.loginfo('going to point')
+                    self.pubgoal.publish(plan)
+                    time.sleep(2)
 
             if detected == 1:
                 #cancel the actual command and go to play state
@@ -257,7 +268,7 @@ class Normal(smach.State):
             self.pub.publish(hello_str)
             time.sleep(1)
             userdata.sleep_counter_out = userdata.sleep_counter_in + 1
-            if (userdata.sleep_counter_in+1>120):
+            if (userdata.sleep_counter_in+1>1200):
                 return  'goSleep'
 
             self.Normal_counter += 1
@@ -286,7 +297,7 @@ class Play(smach.State):
             rospy.loginfo('PLAY, chasing ball')
             time.sleep(1)
             userdata.sleep_counter_out = userdata.sleep_counter_in + 1
-            if (userdata.sleep_counter_in+1>120):
+            if (userdata.sleep_counter_in+1>1200):
                 return  'goSleep'
             #if the ball stops being detected count and after some time if nothing is detected go back to normal state
             if detected == 0:
