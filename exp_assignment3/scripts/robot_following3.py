@@ -56,6 +56,8 @@ found_red = 0
 found_magenta = 0
 found_yellow = 0
 found_blue = 0
+global ball_seen
+ball_seen = 0
 
 class image_feature:
 
@@ -245,9 +247,9 @@ class image_feature:
                 self.detection_pub.publish(detected)
                 sleep(0.05)
 
-
-            if radius > 32 and mirostate == 3:
-                
+            global ball_seen
+            if (radius > 32 and mirostate == 3) or ball_seen==1:
+                ball_seen = 1
                 # draw the circle and centroid on the frame,
                 # then update the list of tracked points
                 cv2.circle(image_np, (int(x), int(y)), int(radius),
@@ -313,6 +315,7 @@ class image_feature:
                     detected = Int32()
                     detected.data = 1
                     self.detection_pub.publish(detected)
+                    ball_seen = 0
                     
         
                 #rospy.loginfo('%d'%reached)

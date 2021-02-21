@@ -64,13 +64,13 @@ Explore::Explore()
   double timeout;
   double min_frontier_size;
   private_nh_.param("planner_frequency", planner_frequency_, 1.0);
-  private_nh_.param("progress_timeout", timeout, 120.0);
+  private_nh_.param("progress_timeout", timeout, 500.0);
   progress_timeout_ = ros::Duration(timeout);
   private_nh_.param("visualize", visualize_, false);
   private_nh_.param("potential_scale", potential_scale_, 1e-3);
   private_nh_.param("orientation_scale", orientation_scale_, 0.0);
   private_nh_.param("gain_scale", gain_scale_, 1.0);
-  private_nh_.param("min_frontier_size", min_frontier_size, 0.5);
+  private_nh_.param("min_frontier_size", min_frontier_size, 0.75);
 
   search_ = frontier_exploration::FrontierSearch(costmap_client_.getCostmap(),
                                                  potential_scale_, gain_scale_,
@@ -193,6 +193,7 @@ void Explore::makePlan()
 
   if (frontiers.empty()) {
     stop();
+    ROS_INFO("no frontiers valid");
     return;
   }
 
@@ -250,7 +251,7 @@ void Explore::makePlan()
 
 bool Explore::goalOnBlacklist(const geometry_msgs::Point& goal)
 {
-  constexpr static size_t tolerace = 50;
+  constexpr static size_t tolerace = 2;
   costmap_2d::Costmap2D* costmap2d = costmap_client_.getCostmap();
 
   // check if a goal is on the blacklist for goals that we're pursuing
@@ -287,6 +288,7 @@ void Explore::reachedGoal(const actionlib::SimpleClientGoalState& status,
 void Explore::start()
 {
   exploring_timer_.start();
+  progress_timeout_ = ros::Duration(500);
   ROS_INFO("Exploration started.");
 }
 
