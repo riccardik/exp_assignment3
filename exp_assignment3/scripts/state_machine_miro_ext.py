@@ -470,6 +470,9 @@ class Find(smach.State):
             rospy.Subscriber("object_detection", Int32, detectedCallback)
             print(detected, status)
             global location_goal
+            # check if a new "play" command has been generated from the user
+            if location_goal == "play"
+                return "goPlay"
             #check if the ball has been found in the previous state track
             #if it has, go back to track
             if prev == 'goTrack':                
