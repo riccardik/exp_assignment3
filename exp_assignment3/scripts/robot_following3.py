@@ -248,7 +248,7 @@ class image_feature:
                 sleep(0.05)
 
             global ball_seen
-            if (radius > 32 and mirostate == 3) or ball_seen==1:
+            if (radius > 27 and mirostate == 3) or ball_seen==1:
                 ball_seen = 1
                 # draw the circle and centroid on the frame,
                 # then update the list of tracked points

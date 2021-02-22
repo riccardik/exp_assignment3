@@ -249,6 +249,7 @@ class Normal(smach.State):
         still_exploring = 1
     
     def execute(self, userdata):
+        global still_exploring
         plan = PoseStamped()
         """ plan.pose.position.x = random_coord()
         plan.pose.position.y = random_coord() """
@@ -258,6 +259,8 @@ class Normal(smach.State):
         plan.header.frame_id='map'
         #rospy.loginfo('going to point')
         self.pubgoal.publish(plan)
+        if (found_green == 1 and found_black == 1 and found_red == 1 and found_magenta == 1 and found_yellow == 1 and found_blue == 1):
+            still_exploring = 0
         if still_exploring ==1:
             explore_abilitation = Int32()
             explore_abilitation.data = 1   
@@ -293,16 +296,26 @@ class Normal(smach.State):
             print('location goal', location_goal)
             
             if location_goal == "play":
-                print ("going by the human")                
-                plan = PoseStamped()
+                print ("going by the human")   
+                """ canc = GoalID()
+                
+                self.canc_goalpub.publish(canc)             
+                plan = PoseStamped() """
                 """ plan.pose.position.x = random_coord()
                 plan.pose.position.y = random_coord() """
-                plan.pose.position.x = -5
+                """ plan.pose.position.x = -5
                 plan.pose.position.y = 7
                 plan.pose.orientation.w = 1
                 plan.header.frame_id='map'
                 #rospy.loginfo('going to point')
-                self.pubgoal.publish(plan)
+                self.pubgoal.publish(plan) """
+                explore_abilitation = Int32()
+                explore_abilitation.data = 0   
+                
+                self.explore_abilitation_pub.publish(explore_abilitation)
+                canc = GoalID()
+                
+                self.canc_goalpub.publish(canc)
                 return  'goPlay'
 
 
@@ -332,7 +345,8 @@ class Play(smach.State):
         rospy.Subscriber("location_goal", String , locationGoalCallback)
         self.explore_abilitation_pub = rospy.Publisher("explore_abilitation",Int32,  queue_size=3)
         self.pubgoal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
-
+        self.canc_goalpub = rospy.Publisher('/move_base/cancel', GoalID , queue_size=1)
+        rospy.Subscriber("/move_base/status",  actionlib_msgs.msg.GoalStatusArray, cmdCallback)
 
         self.rate = rospy.Rate(20)  
         global found_green
@@ -354,20 +368,32 @@ class Play(smach.State):
         
         self.explore_abilitation_pub.publish(explore_abilitation)
         global location_goal
+        if location_goal == 'play':
+            canc = GoalID()
+                
+            self.canc_goalpub.publish(canc)
+            print ("going by the human")                
+            plan = PoseStamped()
+            """ plan.pose.position.x = random_coord()
+            plan.pose.position.y = random_coord() """
+            plan.pose.position.x = -5
+            plan.pose.position.y = 7
+            plan.pose.orientation.w = 1
+            plan.header.frame_id='map'
+            #rospy.loginfo('going to point')
+            self.pubgoal.publish(plan)
+        
         time.sleep(2)
         userdata.current_state = 'goPlay'
         status_id = 2
         #rospy.loginfo(status_id)
         self.pub.publish(status_id)
         rospy.loginfo('PLAY')
-        """  while status!=3 or location_goal == 'play':
-            self.rate.sleep
-            self.Play_counter = self.Play_counter +1; 
-            if self.Play_counter > 60*20:
-                self.Play_counter = 0
-                return  'goNormal' """
+        print('reaching human ')
+        while status!=3 and location_goal == 'play':
+            time.sleep(0.01)            
         
-        
+        self.Play_counter = 0
         while not rospy.is_shutdown():  
             
             time.sleep(1)
@@ -383,11 +409,14 @@ class Play(smach.State):
 
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                        self.rate.sleep
+                       time.sleep(0.001)
                     location_goal = 'play'
                     return 'goPlay'
 
                 else:
+                    canc = GoalID()            
+                    self.canc_goalpub.publish(canc)
+                    self.find_counter = 0
                     return 'goFind'
                 
             elif location_goal == "black":
@@ -400,10 +429,13 @@ class Play(smach.State):
                     print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                        self.rate.sleep
+                        time.sleep(0.001)
                     location_goal = 'play'
                     return 'goPlay'
                 else:
+                    canc = GoalID()            
+                    self.canc_goalpub.publish(canc)
+                    self.find_counter = 0
                     return 'goFind'
                 
             elif  location_goal == "blue":
@@ -415,10 +447,13 @@ class Play(smach.State):
                     print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                        self.rate.sleep
+                        time.sleep(0.001)
                     location_goal = 'play'
                     return 'goPlay'
                 else:
+                    canc = GoalID()            
+                    self.canc_goalpub.publish(canc)
+                    self.find_counter = 0
                     return 'goFind'
             elif   location_goal == "red":
                 if found_red == 1:	
@@ -429,10 +464,13 @@ class Play(smach.State):
                     print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                        self.rate.sleep
+                       time.sleep(0.001)
                     location_goal = 'play'
                     return 'goPlay'
                 else:
+                    canc = GoalID()            
+                    self.canc_goalpub.publish(canc)
+                    self.find_counter = 0
                     return 'goFind'
             elif  location_goal == "magenta":
                 if found_magenta == 1:	
@@ -443,10 +481,13 @@ class Play(smach.State):
                     print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                        self.rate.sleep
+                        time.sleep(0.001)
                     location_goal = 'play'
                     return 'goPlay'
                 else:
+                    canc = GoalID()            
+                    self.canc_goalpub.publish(canc)
+                    self.find_counter = 0
                     return 'goFind'
             elif  location_goal == "yellow":
                 if found_yellow == 1:	
@@ -457,10 +498,13 @@ class Play(smach.State):
                     print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                        self.rate.sleep
+                        time.sleep(0.001)
                     location_goal = 'play'
                     return 'goPlay'
                 else:
+                    canc = GoalID()            
+                    self.canc_goalpub.publish(canc)
+                    self.find_counter = 0
                     return 'goFind'
                     
             elif  location_goal == "play":
@@ -571,12 +615,18 @@ class Find(smach.State):
         self.find_counter =0
     
     def execute(self, userdata):
+        canc = GoalID()
+            
+        self.canc_goalpub.publish(canc)
         self.find_counter = 0
+        time.sleep(1)
+        global still_exploring
         if still_exploring == 1:
             explore_abilitation = Int32()
             explore_abilitation.data = 1   
             
             self.explore_abilitation_pub.publish(explore_abilitation)
+            print('exploration abilitated')
         while not rospy.is_shutdown():  
             status_id = 4
             #rospy.loginfo(status_id)
@@ -631,7 +681,7 @@ class Find(smach.State):
                     #rospy.loginfo('going to point')
                     self.pubgoal.publish(plan)
                     time.sleep(2)
-            print ('detected=', detected)
+            print ('detected=', detected, userdata.sleep_counter_in)
             if detected == 1:
                 print('ball detected')
                 #cancel the actual command and go to play state
@@ -647,7 +697,7 @@ class Find(smach.State):
 
             time.sleep(1)
             userdata.sleep_counter_out = userdata.sleep_counter_in + 1
-            if (userdata.sleep_counter_in+1>200):
+            if (userdata.sleep_counter_in+1>90):
                 return  'goNormal'
 
             self.find_counter += 1
