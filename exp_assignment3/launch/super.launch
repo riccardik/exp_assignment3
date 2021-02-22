@@ -10,9 +10,9 @@
     
 
   
- <node name="robot_following" pkg="exp_assignment3" type="robot_following3.py" />
+ <node name="robot_following" pkg="exp_assignment3" type="robot_following3.py" output="screen"  />
 
  <node name="smach" pkg="smach_viewer" type="smach_viewer.py" />
-  <node name="state_machine" pkg="exp_assignment3" type="state_machine_miro_ext.py" />
-
+<!--   <node name="state_machine" pkg="exp_assignment3" type="state_machine_miro_ext.py" output="screen" />
+ -->
 </launch>

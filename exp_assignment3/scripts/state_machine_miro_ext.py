@@ -56,18 +56,20 @@ global found_red
 global found_magenta
 global found_yellow
 global found_blue
-found_green = 0
-found_black = 0
-found_red = 0
-found_magenta = 0
-found_yellow = 0
-found_blue = 0
 global pose_green 
 global pose_black 
 global pose_red 
 global pose_magenta 
 global pose_yellow 
 global pose_blue 
+
+found_green = 0
+found_black = 0
+found_red = 0
+found_magenta = 0
+found_yellow = 0
+found_blue = 0
+
 
 pose_green = Pose()
 pose_black = Pose()
@@ -92,7 +94,7 @@ def clbk_odom(msg):
     global position_
     global yaw_
     global pose_
-    pose_= msg
+    pose_= msg.pose.pose
 
     # position
     position_ = msg.pose.pose.position
@@ -133,9 +135,22 @@ def cmdCallback(data):
         status = 0
     
 def ballcCallback(data):
+    global found_green
+    global found_black
+    global found_red
+    global found_magenta
+    global found_yellow
+    global found_blue
+    global pose_green 
+    global pose_black 
+    global pose_red 
+    global pose_magenta 
+    global pose_yellow 
+    global pose_blue 
     global ball_color
     global position_
-    ball_color = data
+    global pose_
+    ball_color = data.data
     if ball_color == "green": 
         found_green = 1
         pose_green = pose_
@@ -160,9 +175,10 @@ def ballcCallback(data):
         found_yellow = 1
         pose_yellow = pose_
         print (ball_color, "found")
+    print (pose_, )
 def locationGoalCallback(data):
     global location_goal
-    location_goal = data
+    location_goal = data.data
 
 
 # define state Sleep
@@ -221,8 +237,12 @@ class Normal(smach.State):
         global detected
         self.pubgoal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
         rospy.Subscriber("/move_base/status",  actionlib_msgs.msg.GoalStatusArray, cmdCallback)
+        rospy.Subscriber("/odom",  Odometry, clbk_odom)
         global status
         self.canc_goalpub = rospy.Publisher('/move_base/cancel', GoalID , queue_size=1)
+        rospy.Subscriber("location_goal", String , locationGoalCallback)
+        self.explore_abilitation_pub = rospy.Publisher("explore_abilitation",Int32,  queue_size=3)
+
 
         self.rate = rospy.Rate(200)  # Loop at 200 Hz
         global still_exploring 
@@ -238,6 +258,11 @@ class Normal(smach.State):
         plan.header.frame_id='map'
         #rospy.loginfo('going to point')
         self.pubgoal.publish(plan)
+        if still_exploring ==1:
+            explore_abilitation = Int32()
+            explore_abilitation.data = 1   
+            
+            self.explore_abilitation_pub.publish(explore_abilitation)
         while not rospy.is_shutdown():  
             userdata.current_state = 'goNormal'
             rospy.Subscriber("object_detection", Int32, detectedCallback)
@@ -265,7 +290,9 @@ class Normal(smach.State):
                 self.canc_goalpub.publish(canc)
                 return  'goTrack'
             global location_goal
-            if location_goal == 'play':
+            print('location goal', location_goal)
+            
+            if location_goal == "play":
                 print ("going by the human")                
                 plan = PoseStamped()
                 """ plan.pose.position.x = random_coord()
@@ -303,9 +330,29 @@ class Play(smach.State):
         self.Play_counter = 0
         self.pub = rospy.Publisher('miro_state', std_msgs.msg.Int32 , queue_size=1)
         rospy.Subscriber("location_goal", String , locationGoalCallback)
+        self.explore_abilitation_pub = rospy.Publisher("explore_abilitation",Int32,  queue_size=3)
+        self.pubgoal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
+
+
         self.rate = rospy.Rate(20)  
+        global found_green
+        global found_black
+        global found_red
+        global found_magenta
+        global found_yellow
+        global found_blue
+        global pose_green 
+        global pose_black 
+        global pose_red 
+        global pose_magenta 
+        global pose_yellow 
+        global pose_blue 
 
     def execute(self, userdata):
+        explore_abilitation = Int32()
+        explore_abilitation.data = 0   
+        
+        self.explore_abilitation_pub.publish(explore_abilitation)
         global location_goal
         time.sleep(2)
         userdata.current_state = 'goPlay'
@@ -313,76 +360,120 @@ class Play(smach.State):
         #rospy.loginfo(status_id)
         self.pub.publish(status_id)
         rospy.loginfo('PLAY')
-        while status!=3 or location_goal == 'play':
+        """  while status!=3 or location_goal == 'play':
             self.rate.sleep
             self.Play_counter = self.Play_counter +1; 
-            if self.Play_counter > 60:
+            if self.Play_counter > 60*20:
                 self.Play_counter = 0
-                return  'goNormal'
+                return  'goNormal' """
+        
+        
         while not rospy.is_shutdown():  
             
             time.sleep(1)
             userdata.sleep_counter_out = 0
-
+            print("inside play", location_goal,  self.Play_counter)
             if location_goal == "green": 
                 if found_green == 1:	
                     plan = PoseStamped()		
                     plan.pose = pose_green
                     plan.header.frame_id='map'
+                    self.pubgoal.publish(plan)
+                    print('reaching ball', location_goal, plan.pose)
+
                     time.sleep(2)
-                    while status!=3 or location_goal != 'play':
+                    while status!=3 and location_goal != 'play':
                         self.rate.sleep
+                    location_goal = 'play'
                     return 'goPlay'
+
+                else:
+                    return 'goFind'
+                
             elif location_goal == "black":
                 if found_black == 1:	
+                    print('reaching ball', location_goal)
                     plan = PoseStamped()		
                     plan.pose = pose_black
                     plan.header.frame_id='map'
+                    self.pubgoal.publish(plan)
+                    print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
-                    while status!=3 or location_goal != 'play':
+                    while status!=3 and location_goal != 'play':
                         self.rate.sleep
+                    location_goal = 'play'
                     return 'goPlay'
+                else:
+                    return 'goFind'
                 
             elif  location_goal == "blue":
                 if found_blue == 1:	
                     plan = PoseStamped()		
                     plan.pose = pose_blue
                     plan.header.frame_id='map'
+                    self.pubgoal.publish(plan)
+                    print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
-                    while status!=3 or location_goal != 'play':
+                    while status!=3 and location_goal != 'play':
                         self.rate.sleep
+                    location_goal = 'play'
                     return 'goPlay'
+                else:
+                    return 'goFind'
             elif   location_goal == "red":
                 if found_red == 1:	
                     plan = PoseStamped()		
                     plan.pose = pose_red
                     plan.header.frame_id='map'
+                    self.pubgoal.publish(plan)
+                    print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
-                    while status!=3 or location_goal != 'play':
+                    while status!=3 and location_goal != 'play':
                         self.rate.sleep
+                    location_goal = 'play'
                     return 'goPlay'
+                else:
+                    return 'goFind'
             elif  location_goal == "magenta":
                 if found_magenta == 1:	
                     plan = PoseStamped()		
                     plan.pose = pose_magenta
                     plan.header.frame_id='map'
+                    self.pubgoal.publish(plan)
+                    print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
-                    while status!=3 or location_goal != 'play':
+                    while status!=3 and location_goal != 'play':
                         self.rate.sleep
+                    location_goal = 'play'
                     return 'goPlay'
+                else:
+                    return 'goFind'
             elif  location_goal == "yellow":
                 if found_yellow == 1:	
                     plan = PoseStamped()		
                     plan.pose = pose_yellow
                     plan.header.frame_id='map'
+                    self.pubgoal.publish(plan)
+                    print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
-                    while status!=3 or location_goal != 'play':
+                    while status!=3 and location_goal != 'play':
                         self.rate.sleep
+                    location_goal = 'play'
                     return 'goPlay'
-            else: 
-                return 'goFind'
+                else:
+                    return 'goFind'
+                    
+            elif  location_goal == "play":
+                print('waiting for cmd location')
+                if self.Play_counter > 20:
+                    self.Play_counter = 0
+                    location_goal = ''
+                    return  'goNormal'
+            
                 
-           
+                
+            self.Play_counter = self.Play_counter +1; 
+
             
             
            
@@ -402,6 +493,8 @@ class Track(smach.State):
         self.Track_counter = 0
         self.pub = rospy.Publisher('miro_state', std_msgs.msg.Int32 , queue_size=1)
         self.rate = rospy.Rate(200)  # Loop at 200 Hz
+        rospy.Subscriber("/odom",  Odometry, clbk_odom)
+
         rospy.Subscriber("ball_color", String , ballcCallback)
 
     def execute(self, userdata):
@@ -428,8 +521,10 @@ class Track(smach.State):
             if self.Play_counter > 5:
                 self.Play_counter = 0
                 return  'goNormal' """
+            global pose_
             while (detected == 1):
                 print ("ball found")
+                print(pose_)
                 self.rate.sleep
             return prev
             
@@ -455,12 +550,33 @@ class Find(smach.State):
         rospy.Subscriber("/move_base/status",  actionlib_msgs.msg.GoalStatusArray, cmdCallback)
         global status
         self.canc_goalpub = rospy.Publisher('/move_base/cancel', GoalID , queue_size=1)
+        self.explore_abilitation_pub = rospy.Publisher("explore_abilitation",Int32,  queue_size=3)
+        global detected 
 
         self.rate = rospy.Rate(200)  # Loop at 200 Hz
         global still_exploring 
         still_exploring = 1
+        global found_green
+        global found_black
+        global found_red
+        global found_magenta
+        global found_yellow
+        global found_blue
+        global pose_green 
+        global pose_black 
+        global pose_red 
+        global pose_magenta 
+        global pose_yellow 
+        global pose_blue 
+        self.find_counter =0
     
     def execute(self, userdata):
+        self.find_counter = 0
+        if still_exploring == 1:
+            explore_abilitation = Int32()
+            explore_abilitation.data = 1   
+            
+            self.explore_abilitation_pub.publish(explore_abilitation)
         while not rospy.is_shutdown():  
             status_id = 4
             #rospy.loginfo(status_id)
@@ -470,9 +586,7 @@ class Find(smach.State):
             rospy.Subscriber("object_detection", Int32, detectedCallback)
             print(detected, status)
             global location_goal
-            # check if a new "play" command has been generated from the user
-            if location_goal == "play"
-                return "goPlay"
+            
             #check if the ball has been found in the previous state track
             #if it has, go back to track
             if prev == 'goTrack':                
@@ -500,6 +614,7 @@ class Find(smach.State):
                     if found_yellow == 1:	
                         location_goal = 'play'
                         return 'goPlay'
+            
                     
             
             if still_exploring == 0:
@@ -516,8 +631,9 @@ class Find(smach.State):
                     #rospy.loginfo('going to point')
                     self.pubgoal.publish(plan)
                     time.sleep(2)
-
+            print ('detected=', detected)
             if detected == 1:
+                print('ball detected')
                 #cancel the actual command and go to play state
                 canc = GoalID()
                 
@@ -525,11 +641,13 @@ class Find(smach.State):
                 return  'goTrack'
             
            
-
+            # check if a new "play" command has been generated from the user
+            if location_goal == "play":
+                return "goPlay"
 
             time.sleep(1)
             userdata.sleep_counter_out = userdata.sleep_counter_in + 1
-            if (userdata.sleep_counter_in+1>60):
+            if (userdata.sleep_counter_in+1>200):
                 return  'goNormal'
 
             self.find_counter += 1

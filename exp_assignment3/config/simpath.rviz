@@ -183,7 +183,7 @@ Visualization Manager:
       Marker Topic: /explore/frontiers
       Name: MarkerArray
       Namespaces:
-        {}
+        frontiers: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -211,7 +211,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 29.8453026
+      Distance: 10.7334003
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -249,5 +249,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 676
-  X: 475
-  Y: 194
+  X: 849
+  Y: 432
