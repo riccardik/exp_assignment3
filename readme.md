@@ -35,15 +35,15 @@ This is a graph of the system architecture (obtained via rqt-graph):
 
 The node <code>state_miro</code> contains the state machine that will be described right after this paragraph.
 
-The node <code>cmd_generator</code> sends commands to the state machine; a successful "PLAY" command will make the robot go to the human position and then a location command will succeed; the robot wait for some time for the instruction to which location to go, if that is not received it will go back wandering in the map.
+The node <code>state_c</code> (or <code>state_c_random</code>) sends commands to the state machine; a successful "PLAY" command will make the robot go to the human position and then a location command will succeed; the robot wait for some time for the instruction to which location to go, if that is not received it will go back wandering in the map.
 
-The node <code>image_feature</code> receives the image from the camera and if detects a ball sends a message to the <code>state_miro</code> node; when the state machine will change state, this node will also send <code>cmd_vel</code> messages to the robot depending on the distance from the ball.
+The node <code>robot_following</code> receives the image from the camera and if detects a ball sends a message to the <code>state_miro</code> node; when the state machine will change state, this node will also send <code>cmd_vel</code> messages to the robot depending on the distance from the ball.
 
 `move_base`, this node will allow to navigate in the map to a given xy coordinate, using a global and a local planner for the navigation.
 
-`explore_lite`, this node allows to map the ambient, navigation towards unexplored frontier of the visible map.
+`explore`, this node allows to map the ambient, navigation towards unexplored frontier of the visible map.
 
-The node `gmapping` takes informations about the physical obstacles in front of the robot using the Lidar sensor; those data will be used to build the map of the ambient.
+The node `slam_gmapping` takes informations about the physical obstacles in front of the robot using the Lidar sensor; those data will be used to build the map of the ambient.
 
 Snapshot of the map while it is being built(obtaned via rviz):
 
