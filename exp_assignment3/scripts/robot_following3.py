@@ -117,7 +117,7 @@ class image_feature:
     def callback(self, ros_data):
         '''Callback function of subscribed topic. 
         Here images get converted and features detected
-        If the ball is detected a message will be setn to the state machine
+        If a ball is detected a message will be setn to the state machine
         when the state machine will commute to the PLAY state the function will send
         cmd_vel msg to the robot'''
         global reached
@@ -149,15 +149,7 @@ class image_feature:
         magentaLower = (125, 50, 50) 
         magentaUpper = (150, 255, 255)
 
-        """ blurred = cv2.GaussianBlur(image_np, (11, 11), 0)
-        hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, greenLower, greenUpper)
-        mask = cv2.erode(mask, None, iterations=2)
-        mask = cv2.dilate(mask, None, iterations=2)
-        ballcolor = "green"
-        #cv2.imshow('mask', mask)
-        cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cnts = imutils.grab_contours(cnts) """
+        # look for the centrodes of all the colors
 
         cntsg = find_centrodes(greenLower, greenUpper, np_arr, image_np)
         cntsbk = find_centrodes(blackLower, blackUpper, np_arr, image_np)
@@ -261,15 +253,7 @@ class image_feature:
                 #print(reached)
                 global xc
                 global yc
-                """ if reached !=1:
-                    explore_abilitation.data = 0
-                    if radius <50:
-                        xfront
-                    else:
-                        self.vel_pub.publish(vel)
-                        explore_abilitation = Int32()
-                        
-                        self.explore_abilitation_pub.publish(explore_abilitation) """
+                
                 if reached !=1:
                     explore_abilitation = Int32()
                     explore_abilitation.data = 0
@@ -319,57 +303,14 @@ class image_feature:
                     
         
                 #rospy.loginfo('%d'%reached)
-                """ if  vel.angular.z < 0.05 and vel.angular.z > -0.05 and vel.linear.x < 0.05 and vel.linear.x > -0.05 and reached == 0:
-                    rospy.loginfo('Moving head')
-                    print ('find ball: "%s"' % ballcolor)
-                    global xc
-                    global yc
-                    print ('position: "%f, %f"' % (xc, yc))
-                    vel.angular.z = 0
-                    vel.linear.x = 0
-                    self.vel_pub.publish(vel)
-                    ang1 = Float64()
-                    ang1.data = 0
-                    self.ang_pub.publish(ang1)
-                    time.sleep(2)
-                    ang1.data = -0.7
-                    self.ang_pub.publish(ang1)
-                    time.sleep(2)
-                    ang1.data = 0
-                    self.ang_pub.publish(ang1)
-                    time.sleep(1)
-                    ang1.data = 0.7
-                    self.ang_pub.publish(ang1)
-                    time.sleep(2)
-                    ang1.data = 0
-                    self.ang_pub.publish(ang1)
-                    #set reached to 1 to do the head movement just one time
-                    reached = 1
-                elif  vel.angular.z > 0.05 and vel.linear.x > 0.05 :
-                    
-                    reached = 0
-
-            else:
-                if  mirostate == 2:
-                    #aligned
-                    vel = Twist()
-                    vel.linear.x = 0.5
-                    self.vel_pub.publish(vel)
-                    reached = 0 """
+               
 
         else:
-            #green not found
-            """  vel = Twist()
-            vel.angular.z = 0.5
-            self.vel_pub.publish(vel)
-            reached = 0 """
+            #new ball not found
             detected = Int32()
             detected.data = 0
             self.detection_pub.publish(detected)
             reached = 0
-            """ explore_abilitation = Int32()
-            explore_abilitation.data = 1
-            self.explore_abilitation_pub.publish(explore_abilitation) """
 
         cv2.imshow('window', image_np)
         cv2.waitKey(2)
@@ -377,6 +318,9 @@ class image_feature:
         # self.subscriber.unregister()
 
 def find_centrodes(lower, upper, np_arr, image_np):
+    ''' Applies the segmentation to the image depending on the upper and lower bounds and returns the centrodes.
+
+    '''
     blurred = cv2.GaussianBlur(image_np, (11, 11), 0)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lower, upper)
