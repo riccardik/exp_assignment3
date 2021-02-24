@@ -92,7 +92,7 @@ In particular, we have:
      - `sim_random.launch`: launches the simulation where commands are generated randomly;
 	 - `gmapping.launch`: launches the mapping procedure;
 	 - `move_base.launch`: launches the node that allows the trajectory planning;
-     - `simulation.launches`: launches the simulation, it is not to be called directly.
+     - `simulation.launch`: launches the simulation, it is not to be called directly.
 
 </p>
 
