@@ -16,7 +16,7 @@ The ambient is devided in rooms, each room has inside a ball of a particular col
 - Bathroom, magenta;
 - Bedroom, black.
 
-![map](./map_area.png)
+![map](./map.png)
 </p>
 
 ### System architecture
@@ -40,6 +40,10 @@ The node <code>reaching_goal2</code> is the robot action server.
 `move_base`, this node will allow to navigate in the map to a given xy coordinate, using a global and a local planner for the navigation
 `explore_lite`,  this node allows to map the ambient, navigation towards unexplored frontier of the visible map.
 The node `gmapping` takes informations about the physical obstacles in front of the robot using the Lidar sensor; those data will be used to build the map of the ambient.
+
+Snapshot of the map while it is being built(obtaned via rviz):
+
+![System Architecture](./map_building.png)
 
 ### System states
 <p>
@@ -80,10 +84,11 @@ In particular, we have:
 	 - `state_c_random.py`: node that radomly sends commands to the robot;
  - `launch` folder:
      - `display.launch`: launch file that launches Rviz to check the model of the robot;
-     - `simulation_controlled.launch`: launches the simulation where commands are received from the user;
-     - `simulation_random.launch`: launches the simulation where commands are generated randomly;
+     - `sim_controlled.launch`: launches the simulation where commands are received from the user;
+     - `sim_random.launch`: launches the simulation where commands are generated randomly;
 	 - `gmapping.launch`: launches the mapping procedure;
 	 - `move_base.launch`: launches the node that allows the trajectory planning;
+     - `simulation.launches`: launches the simulation, it is not to be called directly.
 
 </p>
 
@@ -131,7 +136,7 @@ A command line interface allows to send commands to make the robot go in the `PL
 
 For both, an additional window will open: this contains the output image from the robot's camera:
 
-![cameraview](./cameraview.png)
+![cameraview](./camera.png)
 </p>
 
 ### System features 
