@@ -170,7 +170,7 @@ Depending on `explore_lite` and starting/stopping it when it necessary it looks 
 ### Possible improvements
 <p>
 
-The overall system requires a very high cpu load, so the simulation do not run at run time (being in a VM also do not help), maybe some optimization could be made, for instance reducing the image resolution or lowering the framerate.
+The overall system generates a very high cpu load, so the simulation do not run at run time (being in a VM also do not help), maybe some optimization could be made, for instance reducing the image resolution or lowering the framerate.
 In my case i had to put the Lidar sensor a bit far off the robot model because otherwhise it wouldn't be able to properly detect the obstacles but detecting himself, a bit more study of the positioning could make it more elegant. 
 </p>
 
