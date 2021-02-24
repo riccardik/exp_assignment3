@@ -14,5 +14,5 @@
 
  <node name="smach" pkg="smach_viewer" type="smach_viewer.py" />
 <node name="state_machine" pkg="exp_assignment3" type="state_machine_miro_ext.py" output="screen" />
- <node name="state_c_random" pkg="exp_assignment3" type="state_c_rand.py" output="screen" />
+ <node name="state_c_random" pkg="exp_assignment3" type="state_c_random.py" output="screen" />
 </launch>

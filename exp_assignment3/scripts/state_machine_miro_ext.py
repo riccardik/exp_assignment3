@@ -91,6 +91,10 @@ def detectedCallback(data):
     detected = data.data
 
 def clbk_odom(msg):
+    """Callback for the odometry
+
+    
+    """
     global position_
     global yaw_
     global pose_
@@ -135,6 +139,10 @@ def cmdCallback(data):
         status = 0
     
 def ballcCallback(data):
+    """Callback save the position of a ball when it has been found
+
+    
+    """
     global found_green
     global found_black
     global found_red
@@ -177,6 +185,10 @@ def ballcCallback(data):
         print (ball_color, "found")
     print (pose_, )
 def locationGoalCallback(data):
+    """Callback to read the location goal
+
+    
+    """
     global location_goal
     location_goal = data.data
 
