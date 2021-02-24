@@ -195,25 +195,39 @@ class Sleep(smach.State):
                              output_keys=['sleep_counter_out', 'current_state'])
         self.pub = rospy.Publisher('miro_state', std_msgs.msg.Int32 , queue_size=1)
         self.pubgoal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
+        self.canc_goalpub = rospy.Publisher('/move_base/cancel', GoalID , queue_size=1)
+        rospy.Subscriber("location_goal", String , locationGoalCallback)
+        self.explore_abilitation_pub = rospy.Publisher("explore_abilitation",Int32,  queue_size=3)
         global status
         
     def execute(self, userdata):
         userdata.current_state = 'goSleep'
-        # function called when exiting from the node, it can be blacking
+
+        #disables exploring and cancels the last goal
+        explore_abilitation = Int32()
+        explore_abilitation.data = 0         
+        self.explore_abilitation_pub.publish(explore_abilitation)
+        global location_goal
+        canc = GoalID()                
+        self.canc_goalpub.publish(canc)
+        #publishes the new goal and status
         status_id = 0
         #rospy.loginfo(status_id)
         self.pub.publish(status_id)
         plan = PoseStamped()
-        plan.pose.position.x = 0
-        plan.pose.position.y = 0
+        plan.pose.position.x = -5
+        plan.pose.position.y = 4
         plan.pose.orientation.w = 1
         plan.header.frame_id='map'
         self.pubgoal.publish(plan)
+        
         rospy.loginfo('SLEEP, miro is tired, commands will be ignored for some time')
         #time.sleep(15)
-        while status!=3:
+        count_timeout = 0
+        while (status!=3 and count_timeout < 120):
             #rospy.loginfo("status is %d"%status)
             time.sleep(1)
+            count_timeout +=1
         time.sleep(5)
         
         userdata.sleep_counter_out = 0
@@ -251,16 +265,16 @@ class Normal(smach.State):
     def execute(self, userdata):
         global still_exploring
         plan = PoseStamped()
-        """ plan.pose.position.x = random_coord()
-        plan.pose.position.y = random_coord() """
         plan.pose.position.x = random_coord()
         plan.pose.position.y = random_coord()
         plan.pose.orientation.w = 1
         plan.header.frame_id='map'
         #rospy.loginfo('going to point')
         self.pubgoal.publish(plan)
+        #if all ball has been found will use just random navigation...
         if (found_green == 1 and found_black == 1 and found_red == 1 and found_magenta == 1 and found_yellow == 1 and found_blue == 1):
             still_exploring = 0
+        # ... if not, just enable the exploration
         if still_exploring ==1:
             explore_abilitation = Int32()
             explore_abilitation.data = 1   
@@ -269,11 +283,12 @@ class Normal(smach.State):
         while not rospy.is_shutdown():  
             userdata.current_state = 'goNormal'
             rospy.Subscriber("object_detection", Int32, detectedCallback)
-            #check to see if previous planning action has suceeded
+            
             print(detected, status)
+            #check to see if previous planning action has suceeded if the exploration is finished
             if still_exploring == 0:
                 if detected == 0 and (status==0 or status ==3):
-                    print ("ciao")
+                    #print ("random navigation")
                 
                     plan = PoseStamped()
                     """ plan.pose.position.x = random_coord()
@@ -285,7 +300,7 @@ class Normal(smach.State):
                     #rospy.loginfo('going to point')
                     self.pubgoal.publish(plan)
                     time.sleep(2)
-
+            #check if an undiscovered colored ball has been detected in the field of view
             if detected == 1:
                 #cancel the actual command and go to play state
                 canc = GoalID()
@@ -296,19 +311,8 @@ class Normal(smach.State):
             print('location goal', location_goal)
             
             if location_goal == "play":
-                print ("going by the human")   
-                """ canc = GoalID()
-                
-                self.canc_goalpub.publish(canc)             
-                plan = PoseStamped() """
-                """ plan.pose.position.x = random_coord()
-                plan.pose.position.y = random_coord() """
-                """ plan.pose.position.x = -5
-                plan.pose.position.y = 7
-                plan.pose.orientation.w = 1
-                plan.header.frame_id='map'
-                #rospy.loginfo('going to point')
-                self.pubgoal.publish(plan) """
+                #a play command has been received, disable exploration and go to the state PLAY
+                print ("going by the human")
                 explore_abilitation = Int32()
                 explore_abilitation.data = 0   
                 
@@ -323,6 +327,7 @@ class Normal(smach.State):
             #rospy.loginfo(status_id)
             self.pub.publish(status_id)
             time.sleep(1)
+            #sleep timeout check
             userdata.sleep_counter_out = userdata.sleep_counter_in + 1
             if (userdata.sleep_counter_in+1>1200):
                 return  'goSleep'
@@ -363,11 +368,13 @@ class Play(smach.State):
         global pose_blue 
 
     def execute(self, userdata):
+        #disable exploration
         explore_abilitation = Int32()
         explore_abilitation.data = 0   
         
         self.explore_abilitation_pub.publish(explore_abilitation)
         global location_goal
+        #if the command is still play, reach the human position
         if location_goal == 'play':
             canc = GoalID()
                 
@@ -391,14 +398,19 @@ class Play(smach.State):
         rospy.loginfo('PLAY')
         print('reaching human ')
         while status!=3 and location_goal == 'play':
+            #if a location command has been received, exit the loop
             time.sleep(0.01)            
         
         self.Play_counter = 0
         while not rospy.is_shutdown():  
             
             time.sleep(1)
+            #entering in play state will reset the sleep counter
             userdata.sleep_counter_out = 0
-            print("inside play", location_goal,  self.Play_counter)
+            #print("inside play", location_goal,  self.Play_counter)
+            #check for the requested location; if the location has been found, go to its position and then 
+            # return to the PLAY state
+            #if hasn't been found, go to the FIND state
             if location_goal == "green": 
                 if found_green == 1:	
                     plan = PoseStamped()		
@@ -510,6 +522,7 @@ class Play(smach.State):
             elif  location_goal == "play":
                 print('waiting for cmd location')
                 if self.Play_counter > 20:
+                    # if no cmd received for 20 sec -> go back to NORMAL
                     self.Play_counter = 0
                     location_goal = ''
                     return  'goNormal'
@@ -518,6 +531,8 @@ class Play(smach.State):
                 
             self.Play_counter = self.Play_counter +1; 
 
+
+            #userdata.sleep_counter_out = userdata.sleep_counter_in 
             
             
            
@@ -531,45 +546,33 @@ class Track(smach.State):
     """
     def __init__(self):
         smach.State.__init__(self, 
-                             outcomes=['goNormal', 'goPlay', 'goFind'],
+                             outcomes=['goNormal', 'goFind'],
                              input_keys=['sleep_counter_in', 'previous_state'],
                              output_keys=['sleep_counter_out', 'current_state'])
         self.Track_counter = 0
         self.pub = rospy.Publisher('miro_state', std_msgs.msg.Int32 , queue_size=1)
-        self.rate = rospy.Rate(200)  # Loop at 200 Hz
+        self.rate = rospy.Rate(1) 
         rospy.Subscriber("/odom",  Odometry, clbk_odom)
-
         rospy.Subscriber("ball_color", String , ballcCallback)
 
     def execute(self, userdata):
         while not rospy.is_shutdown(): 
-            
+            #memorize the previous state to know to which state go back
             prev = userdata.previous_state
             userdata.current_state = 'goTrack' 
             status_id = 3
-            userdata.sleep_counter_out = 0
+            userdata.sleep_counter_out = userdata.sleep_counter_in
             #rospy.loginfo(status_id)
+            #publishing status id
             self.pub.publish(status_id)
             rospy.loginfo('Track, chasing ball')
             time.sleep(1)
-            """ userdata.sleep_counter_out = userdata.sleep_counter_in + 1
-            if (userdata.sleep_counter_in+1>120):
-                return  'goSleep' """
-            """ #if the ball stops being detected count and after some time if nothing is detected go back to normal state
-            if detected == 0:
-                self.Play_counter = self.Play_counter +1
-            if detected == 1:
-                self.Play_counter = 0
-            
-            
-            if self.Play_counter > 5:
-                self.Play_counter = 0
-                return  'goNormal' """
             global pose_
             while (detected == 1):
-                print ("ball found")
-                print(pose_)
-                self.rate.sleep
+                #print ("ball found")
+                #print(pose_)
+                time.sleep(0.001)
+            # go back to the previous state
             return prev
             
             self.rate.sleep
@@ -615,12 +618,10 @@ class Find(smach.State):
         self.find_counter =0
     
     def execute(self, userdata):
-        canc = GoalID()
-            
-        self.canc_goalpub.publish(canc)
         self.find_counter = 0
         time.sleep(1)
         global still_exploring
+        #enable exploration
         if still_exploring == 1:
             explore_abilitation = Int32()
             explore_abilitation.data = 1   
@@ -638,7 +639,7 @@ class Find(smach.State):
             global location_goal
             
             #check if the ball has been found in the previous state track
-            #if it has, go back to track
+            #if it has, go back to PLAY, if not, continue searching
             if prev == 'goTrack':                
             	if location_goal == "green": 
                     if found_green == 1:	
@@ -663,10 +664,8 @@ class Find(smach.State):
                 elif  location_goal == "yellow":
                     if found_yellow == 1:	
                         location_goal = 'play'
-                        return 'goPlay'
-            
-                    
-            
+                        return 'goPlay'      
+            #it should never happen
             if still_exploring == 0:
                 if detected == 0 and (status==0 or status ==3):
                     print ("ciao")
@@ -682,6 +681,7 @@ class Find(smach.State):
                     self.pubgoal.publish(plan)
                     time.sleep(2)
             print ('detected=', detected, userdata.sleep_counter_in)
+            #check if a colored ball has been detected, if is not the desired one it will continue looking for it until timeout
             if detected == 1:
                 print('ball detected')
                 #cancel the actual command and go to play state
@@ -696,11 +696,16 @@ class Find(smach.State):
                 return "goPlay"
 
             time.sleep(1)
-            userdata.sleep_counter_out = userdata.sleep_counter_in + 1
-            if (userdata.sleep_counter_in+1>90):
-                return  'goNormal'
-
+            #check for timeout, if no balls found go back to the state NORMAL
             self.find_counter += 1
+            if (self.find_counter>90):
+                return  'goNormal'
+            #check for the sleep timeout    
+            userdata.sleep_counter_out = userdata.sleep_counter_in + 1
+            if (userdata.sleep_counter_in+1>1200):
+                return  'goSleep'
+
+            
             self.rate.sleep
 
 
@@ -749,7 +754,6 @@ def main():
                                           'current_state':'prev_state'})
         smach.StateMachine.add('TRACK', Track(), 
                                transitions={'goNormal':'NORMAL',
-                                            'goPlay':'PLAY',
                                             'goFind':'FIND'},
                                remapping={'sleep_counter_in':'sm_counter',
                                           'sleep_counter_out':'sm_counter',
