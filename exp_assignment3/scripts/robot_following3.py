@@ -233,7 +233,7 @@ class image_feature:
             #print ('mirostate: [%d]' % mirostate)
             # only proceed if the radius meets a minimum size
             print ('radius0 ', radius)
-            if radius >32:
+            if radius >27:
                 detected = Int32()
                 detected.data = 1
                 self.detection_pub.publish(detected)

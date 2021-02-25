@@ -13,7 +13,7 @@ def random_cmd():
     Returns:
         [char]: [id of a command]
     """
-    return random.choice(['y','n', 'n'])
+    return random.choice(['y','n', 'n', 'n'])
 def random_room():
     """Generates a random letter
 

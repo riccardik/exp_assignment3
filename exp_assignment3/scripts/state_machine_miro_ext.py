@@ -275,7 +275,9 @@ class Normal(smach.State):
         still_exploring = 1
     
     def execute(self, userdata):
+
         global still_exploring
+        # a little hack to make it continously moving
         plan = PoseStamped()
         plan.pose.position.x = random_coord()
         plan.pose.position.y = random_coord()
@@ -295,8 +297,8 @@ class Normal(smach.State):
         while not rospy.is_shutdown():  
             userdata.current_state = 'goNormal'
             rospy.Subscriber("object_detection", Int32, detectedCallback)
-            
-            print(detected, status)
+            print("NORMAL, discovering the map and wandering around")
+            #print(detected, status)
             #check to see if previous planning action has suceeded if the exploration is finished
             if still_exploring == 0:
                 if detected == 0 and (status==0 or status ==3):
@@ -320,7 +322,7 @@ class Normal(smach.State):
                 self.canc_goalpub.publish(canc)
                 return  'goTrack'
             global location_goal
-            print('location goal', location_goal)
+            #print('location goal', location_goal)
             
             if location_goal == "play":
                 #a play command has been received, disable exploration and go to the state PLAY
@@ -409,9 +411,16 @@ class Play(smach.State):
         self.pub.publish(status_id)
         rospy.loginfo('PLAY')
         print('reaching human ')
-        while status!=3 and location_goal == 'play':
-            #if a location command has been received, exit the loop
-            time.sleep(0.01)            
+        time.sleep(2)
+        count_timeout = 0
+        while (status!=3 and location_goal == 'play' and count_timeout < 600):
+            #if a location command has been received, the robot has reached human or 
+            # it is in timeout , exit the loop
+            count_timeout += 1
+            time.sleep(0.1) 
+            if count_timeout%10==0:
+                print('PLAY, reaching human and waiting for commands')
+
         
         self.Play_counter = 0
         while not rospy.is_shutdown():  
@@ -423,6 +432,7 @@ class Play(smach.State):
             #check for the requested location; if the location has been found, go to its position and then 
             # return to the PLAY state
             #if hasn't been found, go to the FIND state
+            count_print = 0
             if location_goal == "green": 
                 if found_green == 1:	
                     plan = PoseStamped()		
@@ -433,7 +443,10 @@ class Play(smach.State):
 
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                       time.sleep(0.001)
+                       time.sleep(0.01)
+                       count_print += 1
+                       if count_print%100==0:                
+                            print('PLAY. reaching ball', location_goal)
                     location_goal = 'play'
                     return 'goPlay'
 
@@ -452,8 +465,13 @@ class Play(smach.State):
                     self.pubgoal.publish(plan)
                     print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
+                    
                     while status!=3 and location_goal != 'play':
-                        time.sleep(0.001)
+                        time.sleep(0.01)
+                        count_print += 1
+                        if count_print%100==0:                
+                            print('PLAY. reaching ball', location_goal)
+                            
                     location_goal = 'play'
                     return 'goPlay'
                 else:
@@ -471,7 +489,10 @@ class Play(smach.State):
                     print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                        time.sleep(0.001)
+                        time.sleep(0.01)
+                        count_print += 1
+                        if count_print%100==0:                
+                            print('PLAY. reaching ball', location_goal)
                     location_goal = 'play'
                     return 'goPlay'
                 else:
@@ -488,7 +509,10 @@ class Play(smach.State):
                     print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                       time.sleep(0.001)
+                       time.sleep(0.01)
+                       count_print += 1
+                       if count_print%100==0:                
+                            print('PLAY. reaching ball', location_goal)
                     location_goal = 'play'
                     return 'goPlay'
                 else:
@@ -505,7 +529,10 @@ class Play(smach.State):
                     print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                        time.sleep(0.001)
+                        time.sleep(0.01)
+                        count_print += 1
+                        if count_print%100==0:                
+                            print('PLAY. reaching ball', location_goal)
                     location_goal = 'play'
                     return 'goPlay'
                 else:
@@ -522,7 +549,10 @@ class Play(smach.State):
                     print('reaching ball', location_goal, plan.pose)
                     time.sleep(2)
                     while status!=3 and location_goal != 'play':
-                        time.sleep(0.001)
+                        time.sleep(0.01)
+                        count_print += 1
+                        if count_print%100==0:                
+                            print('PLAY. reaching ball', location_goal)
                     location_goal = 'play'
                     return 'goPlay'
                 else:
@@ -532,7 +562,7 @@ class Play(smach.State):
                     return 'goFind'
                     
             elif  location_goal == "play":
-                print('waiting for cmd location')
+                print('PLAY, waiting for cmd location')
                 if self.Play_counter > 20:
                     # if no cmd received for 20 sec -> go back to NORMAL
                     self.Play_counter = 0
@@ -577,7 +607,7 @@ class Track(smach.State):
             #rospy.loginfo(status_id)
             #publishing status id
             self.pub.publish(status_id)
-            rospy.loginfo('Track, chasing ball')
+            rospy.loginfo('TRACK, chasing ball')
             time.sleep(1)
             global pose_
             while (detected == 1):
@@ -633,6 +663,15 @@ class Find(smach.State):
         self.find_counter = 0
         time.sleep(1)
         global still_exploring
+        global still_exploring
+        # a little hack to make it continously moving
+        plan = PoseStamped()
+        plan.pose.position.x = random_coord()
+        plan.pose.position.y = random_coord()
+        plan.pose.orientation.w = 1
+        plan.header.frame_id='map'
+        #rospy.loginfo('going to point')
+        self.pubgoal.publish(plan)
         #enable exploration
         if still_exploring == 1:
             explore_abilitation = Int32()
@@ -657,23 +696,23 @@ class Find(smach.State):
                     if found_green == 1:	
                         location_goal = 'play'
                         return 'goPlay'
-                elif location_goal == "black":
+            	elif location_goal == "black":
                     if found_black == 1:	
                         location_goal = 'play'
                         return 'goPlay'	
-                elif  location_goal == "blue":
+            	elif location_goal == "blue":
                     if found_blue == 1:	
                         location_goal = 'play'
                         return 'goPlay'
-                elif   location_goal == "red":
+            	elif location_goal ==  "red":
                     if found_red == 1:	
                         location_goal = 'play'
                         return 'goPlay'
-                elif  location_goal == "magenta":
+            	elif location_goal == "magenta":
                     if found_magenta == 1:	
                         location_goal = 'play'
                         return 'goPlay'
-                elif  location_goal == "yellow":
+            	elif location_goal == "yellow":
                     if found_yellow == 1:	
                         location_goal = 'play'
                         return 'goPlay'      
@@ -692,7 +731,7 @@ class Find(smach.State):
                     #rospy.loginfo('going to point')
                     self.pubgoal.publish(plan)
                     time.sleep(2)
-            print ('detected=', detected, userdata.sleep_counter_in)
+            print ('FIND', location_goal,' timeout=',self.find_counter)
             #check if a colored ball has been detected, if is not the desired one it will continue looking for it until timeout
             if detected == 1:
                 print('ball detected')

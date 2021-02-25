@@ -164,15 +164,21 @@ This is the robot:
 
 Sometimes the `FIND` behavior is a bit slow to start, due to some momentaneous conflict with `explore_lite` and `move_base` and so is not able to find anything because it goes in timeout; this behavior is a bit random so i wasn't really able to understand why.
 Depending on `explore_lite` and starting/stopping it when it necessary it looks like some time that node needs some time to generate a new goal location.
+Sometimes, when entering in the PLAY state and reaching the human, the move_base node is not receiving the command fast enough (or it could have some interference with explore) so it behaves like it has already reached the human and it will wait still for a command.
 
 </p>
 
 ### Possible improvements
 <p>
-It happens very rarely, but sometimes the robot will be stuck in a wall during the TRACK state, not being controlled by the planner; this could be avoided by introducing some kind of timeout to give the control back to the explorer or to ignore that ball for some time to make the robot going back to the NORMAL state.
+It happens very rarely, but sometimes the robot will be stuck in a wall during the TRACK state, not being controlled by the planner; this could be avoided by introducing some kind of timeout to give the control back to the explorer or to ignore that ball for some time to make the robot going back to the NORMAL state (i added a little hack that might work).
 
-The overall system generates a very high cpu load, so the simulation do not run at run time (being in a VM also do not help), maybe some optimization could be made, for instance reducing the image resolution or lowering the framerate.
+The overall system generates a very high cpu load, so the simulation do not run at run time (being in a VM also do not help), maybe some optimization could be made, for instance reducing the image resolution or lowering the framerate. Always related to time, i often use a `time.wait()` function; in order to make the simulation more coherent, i might use a wait function that is related to the actual simulation time and not to the system time.
+
 In my case i had to put the Lidar sensor a bit far off the robot model because otherwhise it wouldn't be able to properly detect the obstacles but detecting himself, a bit more study of the positioning could make it more elegant. 
+
+In the random behavior, it may happen that in some transition (like reacnihg the human in PLAY or the SLEEP location) the robot might discover the area but not detect the ball, because in my architecture this is not allowed. If this happens, the ball could possibly not being found in the future, an improvement could be to add the possibility to be aware if a ball is in the field of view even in those cases.
+
+
 </p>
 
 ### Documentation
