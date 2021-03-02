@@ -122,14 +122,14 @@ Some packages are needed:
 
     
     source ~/my_ros/devel/setup.bash 
-    roslaunch exp_assignment3 simulation_random.launch
+    roslaunch exp_assignment3 sim_random.launch
 
 This runs the random simulation, the state of the robot will be outputted on the shell with the information about the command received and an eventual change of state; unfortunately, due to the implementation of the packages `explore_lite` and `move_base` the output is very cluttered.
 
 If you want to interact with the simulation by giving direct commands you have to run:
     
     source ~/my_ros/devel/setup.bash 
-    roslaunch exp_assignment3 simulation_controlled.launch
+    roslaunch exp_assignment3 sim_controlled.launch
 
 and then open a new shell and run:
 
